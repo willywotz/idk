@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/creativeprojects/go-selfupdate"
 )
@@ -26,6 +27,24 @@ func update() error {
 		return nil
 	}
 
+	if err := handleUpdate(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error checking for updates: %v\n", err)
+	}
+
+	ticker := time.NewTicker(1 * time.Minute)
+
+	go func() {
+		for range ticker.C {
+			if err := handleUpdate(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error checking for updates: %v\n", err)
+			}
+		}
+	}()
+
+	return nil
+}
+
+func handleUpdate() error {
 	fmt.Println("Checking for updates...")
 
 	ctx := context.Background()
