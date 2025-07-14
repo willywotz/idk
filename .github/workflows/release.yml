@@ -1,0 +1,42 @@
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: linux-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: build go binary
+        run: go build -ldflags="-s -w -X 'main.version=${{ github.ref_name }}'" -o idk-windows-amd64.exe .
+
+      - name: upload to action artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: idk-windows-amd64.exe
+          path: idk-windows-amd64.exe
+
+      - name: create github release
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: idk-windows-amd64.exe
+          draft: false
+          prerelease: false
